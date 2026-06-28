@@ -54,7 +54,6 @@ const sendOrderEmail = async (order) => {
         </div>
       `;
     }
-
     // Generate download link
     let downloadLink = '#';
     if (order.items && order.items.length > 0) {
