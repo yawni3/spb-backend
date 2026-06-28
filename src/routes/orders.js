@@ -3,7 +3,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
-const verifyAdmin = require('../middleware/Verifyadmin');
+const verifyAdmin = require('../middleware/verifyAdmin');
 
 // ===== EMAIL SETUP =====
 let emailjs;
