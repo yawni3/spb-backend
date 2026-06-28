@@ -12,6 +12,8 @@ app.use(cors({
   origin: [
     'https://sleepypiebakery.art',
     'https://admin.sleepypiebakery.art',
+    'https://spbadmin-dashboard.netlify.app',
+    'https://spbadin-dashboard.netlify.app',
     'http://localhost:5173',
     'http://localhost:5174'
   ],
