@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
-const verifyAdmin = require('../middleware/verifyAdmin');
+const verifyAdmin = require('../verifyAdmin');
 
 // ===== GET - List all or get by ID =====
 router.get('/', async (req, res) => {

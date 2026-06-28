@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const Verifyadmin = (req, res, next) => {
+const verifyAdmin = (req, res, next) => {
   try {
     const auth = req.headers.authorization;
     if (!auth) {
@@ -16,4 +16,4 @@ const Verifyadmin = (req, res, next) => {
   }
 };
 
-module.exports = Verifyadmin;
+module.exports = verifyAdmin;

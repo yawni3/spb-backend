@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
-const verifyAdmin = require('../middleware/verifyAdmin');
+const verifyAdmin = require('../verifyAdmin');
 
 // ===== GET - Dashboard stats (admin only) =====
 router.get('/', verifyAdmin, async (req, res) => {
