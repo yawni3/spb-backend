@@ -4,29 +4,14 @@ const crypto = require('crypto');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const verifyAdmin = require('../verifyAdmin');
+const { Resend } = require('resend');
 
-// ===== EMAIL SETUP =====
-let emailjs;
-try {
-  emailjs = require('@emailjs/nodejs');
-} catch (e) {
-  console.log('⚠️ @emailjs/nodejs not found, trying @emailjs/browser...');
-  try {
-    emailjs = require('@emailjs/browser');
-  } catch (e2) {
-    console.error('❌ EmailJS not loaded!');
-    emailjs = null;
-  }
-}
+// ===== RESEND SETUP =====
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ===== SEND ORDER EMAIL =====
+// ===== SEND ORDER EMAIL (Resend) =====
 const sendOrderEmail = async (order) => {
   try {
-    if (!emailjs) {
-      console.warn('⚠️ EmailJS not initialized, skipping email');
-      return false;
-    }
-
     const email = order.customer.email;
     if (!email) {
       console.error('❌ Email address empty!');
@@ -54,6 +39,7 @@ const sendOrderEmail = async (order) => {
         </div>
       `;
     }
+
     // Generate download link
     let downloadLink = '#';
     if (order.items && order.items.length > 0) {
@@ -69,32 +55,83 @@ const sendOrderEmail = async (order) => {
       }
     }
 
-    const templateParams = {
-      to_email: email,
-      to_name: email.split('@')[0] || 'Guest',
-      order_number: order.orderNumber || 'SPB-XXXX',
-      order_date: new Date(order.createdAt || Date.now()).toLocaleDateString('tr-TR'),
-      items_html: itemsHtml,
-      download_link: downloadLink,
-      site_url: process.env.SITE_URL || 'https://sleepypiebakery.art'
-    };
+    // ⭐ Resend ile email gönder
+    const { data, error } = await resend.emails.send({
+      from: 'Sleepy Pie Bakery <onboarding@resend.dev>',
+      to: [email],
+      subject: '🧁 Siparişiniz Onaylandı!',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>🧁 Siparişiniz Onaylandı!</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #FFF8F4; padding: 16px; }
+            .container { max-width: 560px; margin: 0 auto; background: #FFFFFF; border-radius: 24px; overflow: hidden; box-shadow: 0 8px 40px rgba(74,36,25,0.10); border: 1px solid #F3C8BE; }
+            .header { background: linear-gradient(135deg, #fad6df 0%, #fdabc4 100%); padding: 32px 24px 24px; text-align: center; }
+            .header-icon { font-size: 52px; display: block; margin-bottom: 6px; }
+            .header h1 { font-family: Georgia, serif; font-size: 28px; color: #4A2419; }
+            .body { padding: 28px 24px 20px; }
+            .greeting { font-size: 20px; font-weight: 700; color: #4A2419; }
+            .greeting span { color: #FF73B3; }
+            .subtext { font-size: 15px; color: #9B7B6D; margin-bottom: 24px; }
+            .order-box { background: #FFF3EE; border-radius: 16px; padding: 18px 20px; margin-bottom: 24px; border: 1px solid #F3C8BE; }
+            .order-box .row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: #6E4A3D; }
+            .order-box .row strong { color: #4A2419; }
+            .order-box .order-id { font-family: 'Courier New', monospace; font-weight: 700; color: #4A2419; background: rgba(255,255,255,0.5); padding: 2px 12px; border-radius: 8px; }
+            .order-box .divider { border-top: 1px dashed #F3C8BE; margin: 8px 0; }
+            .items-title { font-size: 16px; font-weight: 700; color: #4A2419; margin-bottom: 12px; }
+            .btn-wrapper { text-align: center; margin: 28px 0 16px; }
+            .btn-download { display: inline-block; padding: 16px 48px; background: #fdabc4; color: #4A2419; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 17px; box-shadow: 0 4px 16px rgba(253,171,196,0.35); }
+            .link-note { text-align: center; font-size: 13px; color: #C2A79A; margin-top: 6px; }
+            .footer { background: #FFF3EE; padding: 18px 24px; text-align: center; border-top: 1px solid #F3C8BE; }
+            .footer .brand { font-weight: 700; color: #4A2419; }
+            .footer .cozy { font-size: 13px; color: #C2A79A; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <span class="header-icon">🧁</span>
+              <h1>Siparişiniz Hazır!</h1>
+            </div>
+            <div class="body">
+              <p class="greeting">Merhaba <span>${email.split('@')[0] || 'Misafir'}</span>! 🎀</p>
+              <p class="subtext">Siparişiniz başarıyla oluşturuldu.</p>
+              <div class="order-box">
+                <div class="row"><strong>📦 Sipariş No</strong><span class="order-id">${order.orderNumber || 'SPB-XXXX'}</span></div>
+                <div class="row"><strong>📅 Tarih</strong><span>${new Date(order.createdAt || Date.now()).toLocaleDateString('tr-TR')}</span></div>
+                <div class="divider"></div>
+                <div class="row"><strong>📧 Email</strong><span>${email}</span></div>
+              </div>
+              <p class="items-title">🛍️ Siparişinizdeki Ürünler</p>
+              ${itemsHtml}
+              <div class="btn-wrapper">
+                <a href="${downloadLink}" class="btn-download" target="_blank">✨ Ürünlerimi İndir</a>
+              </div>
+              <p class="link-note">🔗 İndirme linki <strong>7 gün</strong> boyunca geçerlidir.</p>
+            </div>
+            <div class="footer">
+              <p>🍰 <span class="brand">Sleepy Pie Bakery</span></p>
+              <p class="cozy">Made with 💕 and lots of sleep</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    });
 
-    console.log('📧 Sending email to:', email);
+    if (error) {
+      console.error('❌ Resend error:', error);
+      return false;
+    }
 
-    const response = await emailjs.send(
-      process.env.EMAILJS_SERVICE_ID,
-      process.env.EMAILJS_TEMPLATE_ID,
-      templateParams,
-      {
-        publicKey: process.env.EMAILJS_PUBLIC_KEY,
-        privateKey: process.env.EMAILJS_PRIVATE_KEY
-      }
-    );
-
-    console.log('✅ Email sent successfully!');
+    console.log('✅ Email sent successfully!', data?.id);
     return true;
   } catch (error) {
-    console.error('❌ Email error:', error.message);
+    console.error('❌ Email error:', error);
     return false;
   }
 };
@@ -205,7 +242,7 @@ router.post('/', async (req, res) => {
     const order = await Order.create(orderData);
     console.log("✅ Order created:", order.orderNumber);
 
-    // Send email
+    // ⭐ Send email with Resend
     const emailSent = await sendOrderEmail(order);
     
     if (emailSent) {
