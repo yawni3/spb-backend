@@ -57,7 +57,7 @@ const sendOrderEmail = async (order) => {
 
     // ⭐ Resend ile email gönder
     const { data, error } = await resend.emails.send({
-      from: 'Sleepy Pie Bakery <onboarding@resend.dev>',
+      from: 'Sleepy Pie Bakery <hello@sleepypiebakery.art>',
       to: [email],
       subject: '🧁 Siparişiniz Onaylandı!',
       html: `
