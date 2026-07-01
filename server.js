@@ -40,6 +40,11 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=300'); // 5 dakika cache
+  next();
+});
+
 // ===== ERROR HANDLER =====
 app.use((err, req, res, next) => {
   console.error('❌ Server error:', err);

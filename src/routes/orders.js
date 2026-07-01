@@ -93,6 +93,13 @@ const sendOrderEmail = async (order) => {
         </head>
         <body>
           <div class="container">
+           <div style="text-align:center;padding:16px 0;">
+          <img 
+            src="" 
+            alt="Sleepy Pie Bakery" 
+            style="width:80px;height:80px;border-radius:50%;object-fit:cover;"
+          />
+        </div>
             <div class="header">
               <span class="header-icon">🧁</span>
               <h1>Siparişiniz Hazır!</h1>
